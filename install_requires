@@ -1,0 +1,4 @@
+setup(
+    # other stuff here
+    install_requires=['xlrd','xlwt'],
+    )
