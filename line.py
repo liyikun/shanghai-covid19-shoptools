@@ -1,3 +1,4 @@
+from itertools import count
 from typing import Dict, List
 from excel import BaseLine, BaseNode, Type
 from utils import isDataEnd, isDataStart, isInfoEnd, isInfoStart
@@ -32,7 +33,7 @@ class ValueNode(BaseNode):
         return self.count
 
     def getValue(self) -> str:
-        return int(self.count) * int(self.value)
+        return round(float(self.count) * float(self.value), 2)
 
 
 class TitleLine(BaseLine):
@@ -49,24 +50,24 @@ class TitleLine(BaseLine):
         texts = []
 
         value = ''
-        goodsIndex = 1
-        infoIndex = 1
+        goodsIndex = 0
+        infoIndex = 0
 
         # parse text
         for i in text:
             if isInfoStart(i):
                 value = ''
             elif isInfoEnd(i):
-                texts.append(value)
                 infoIndex += 1
+                texts.append(value)
                 value = ''
             elif isDataStart(i):
                 value = ''
             elif isDataEnd(i):
+                goodsIndex += 1
                 [name, v] = value.split(":")
                 texts.append(name)
                 self.price[str(goodsIndex)] = v
-                goodsIndex += 1
                 value = ''
             else:
                 value += i
@@ -85,7 +86,7 @@ class TitleLine(BaseLine):
 class DataLine(BaseLine):
     nodes: List[BaseNode] = []
 
-    def __init__(self, source: str, goodsNum: int, price: Dict[str, str]) -> None:
+    def __init__(self, source: str, goodsNum: float, price: Dict[str, str]) -> None:
         super().__init__()
         self.source = source
         self.goodsNum = goodsNum
@@ -97,7 +98,6 @@ class DataLine(BaseLine):
         goods: Dict[str, str] = {}
         nodes: List[BaseNode] = []
         value = ''
-
         # parse text
         for i in text:
             if isInfoStart(i):
@@ -108,17 +108,17 @@ class DataLine(BaseLine):
             elif isDataStart(i):
                 value = ''
             elif isDataEnd(i):
-                [id, value] = value.split("*")
-                goods[id] = value
+                [id, count] = value.split("*")
+                goods[id] = count
                 value = ''
             else:
                 value += i
 
-        for i in range(1, self.goodsNum):
-            c = goods.get(str(i))
-            if c:
-                v = self.price[str(c)]
-                nodes.append(ValueNode(str(c), str(v)))
+        for goodIndex in range(1, self.goodsNum + 1):
+            goodCount = goods.get(str(goodIndex))
+            if goodCount:
+                goodValue = self.price[str(goodIndex)]
+                nodes.append(ValueNode(str(goodCount), str(goodValue)))
             else:
                 nodes.append(ValueNode('0', '0'))
 
@@ -129,7 +129,6 @@ class DataLine(BaseLine):
 
         for i in self.nodes:
             v += i.getValue()
-
         self.nodes.append(ResultNode(str(v)))
 
     def getList(self) -> List[BaseNode]:
@@ -139,7 +138,7 @@ class DataLine(BaseLine):
 class StatisticLine(BaseLine):
     nodes: List[BaseNode] = []
 
-    def __init__(self, values: List[int]) -> None:
+    def __init__(self, values: List[float]) -> None:
         super().__init__()
         self.values = values
         self.parse()
@@ -166,12 +165,13 @@ def countLine(ls: List[BaseLine]):
         v = 0
         for l in ls:
             list = l.getList()
+
             node = list[index]
             
             if node.type == Type.VALUE:
-                v += int(node.getText())
+                v += float(node.getText())
             elif node.type == Type.RESULT:
-                v += int(node.getText())
+                v += float(node.getText())
 
         values.append(v)
 

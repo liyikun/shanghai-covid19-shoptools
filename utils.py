@@ -20,14 +20,14 @@ def readFile(filename):
 
 
 def isInfoStart(i: str):
-    if i == '[' or i == '【':
+    if i == '[' or i == '【' or i == '［':
         return True
     else:
         return False
 
 
 def isInfoEnd(i: str):
-    if i == ']' or i == '】':
+    if i == ']' or i == '】' or i == '］':
         return True
     else:
         return False

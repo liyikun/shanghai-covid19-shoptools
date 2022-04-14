@@ -24,6 +24,8 @@ def main():
     values = countLine(lines)
 
     statisticsLint = StatisticLine(values)
+
+
     statisticsLint.parse()
     
     lines.append(statisticsLint)
